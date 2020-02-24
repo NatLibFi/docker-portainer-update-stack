@@ -1,4 +1,5 @@
 from os import getenv
+from re import sub
 from http.client import HTTPSConnection as connect
 from pathlib import Path
 from subprocess import run as run_cmd
@@ -9,15 +10,11 @@ from urllib.parse import urlencode
 from json import dumps as json_encode
 from json import loads as json_decode
 
-# debug
-from sys import exit
-
 def main():
     check_env()
     stack_names = get_stack_names()
-
-    token = get_auth_token()
-    stacks = find_stacks(token, stack_names)
+    token = get_auth_token()        
+    stacks = find_stacks(token, stack_names) 
     update_stacks(token, stacks)    
 
 def check_env():
@@ -32,11 +29,12 @@ def get_stack_names():
     commit_sha = getenv(commit_sha_env)
 
     p = run_cmd(['git', 'show', '--name-only', '--oneline'], capture_output=True, text=True)
-
+    
     if p.returncode == 0:        
         # Ditch the first line which contains short sha and message
         file_names = p.stdout.strip().split('\n')[1:]
-        return filter(lambda f: Path('{}.yml'.format(f)).is_file(), file_names)
+        iter = filter(lambda f: Path(f).is_file(), file_names)        
+        return [*map(lambda f: sub('\.yml$', '', f), iter)]
 
     raise Exception('Git command failed: {}'.format(p.stderr))
 
@@ -58,8 +56,8 @@ def find_stacks(token, stack_names):
     
     return filter(lambda s: s['Name'] in stack_names, all_stacks)
 
-def update_stacks(token, stacks):
-    for stack in stacks:
+def update_stacks(token, stacks):  
+    for stack in stacks:        
         with open('{}.yml'.format(stack['Name'])) as file:
             manifest = file.read()
             method = 'PUT'
@@ -76,12 +74,12 @@ def update_stacks(token, stacks):
 
 def do_request(method='GET', body=None, headers={}, path='/'):
     url = urlparse(getenv('API_URL'))
-    base_path = '{}/api'.format(url.path)
+    abs_path = '{}/api{}'.format(url.path, path)
 
-    debug('{} request to {}:{}{}{}'.format(method, url.hostname, url.port, base_path, path)
+    debug('{} request to {}:{}{}'.format(method, url.hostname, url.port, abs_path))
     
     connection = connect(url.hostname, url.port)            
-    connection.request(method, '{}{}'.format(base_path, path), body=body, headers=headers)
+    connection.request(method, abs_path, body=body, headers=headers)
     response = connection.getresponse()
 
     if response.status >= 200 and response.status < 300:
