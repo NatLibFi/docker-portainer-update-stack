@@ -68,7 +68,7 @@ def update_stacks(token, stacks):
             body = json_encode({**stack, 'Prune': True, 'StackFileContent': manifest})
         
         if getenv('DRY_RUN'):
-          print('Not updating stack {} because DRY_RUN is set'.format(stack['Name'])
+          print('Not updating stack {} because DRY_RUN is set'.format(stack['Name']))
           return
         
         do_request(method=method, path=path, headers=headers, body=body)            
