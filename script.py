@@ -78,7 +78,9 @@ def do_request(method='GET', body=None, headers={}, path='/'):
     url = urlparse(getenv('API_URL'))
     base_path = '{}/api'.format(url.path)
 
-    connection = connect(url.hostname, url.port)
+    debug('{} request to {}:{}{}{}'.format(method, url.hostname, url.port, base_path, path)
+    
+    connection = connect(url.hostname, url.port)            
     connection.request(method, '{}{}'.format(base_path, path), body=body, headers=headers)
     response = connection.getresponse()
 
@@ -86,6 +88,10 @@ def do_request(method='GET', body=None, headers={}, path='/'):
         return json_decode(response.read())
 
     raise Exception('Unexpected response: {}, {}'.format(response.status, response.read()))
+
+def debug(message):
+    if getenv('DEBUG'):
+        print('DEBUG: {}'.format(message))
 
 if __name__ == '__main__':
     main()
