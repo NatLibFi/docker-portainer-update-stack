@@ -66,10 +66,13 @@ def update_stacks(token, stacks):
             headers = {'Authorization': 'Bearer {}'.format(token), 'Content-Type': 'application/json'}
             path = '/stacks/{}?endpointId={}'.format(stack['Id'], stack['EndpointId'])            
             body = json_encode({**stack, 'Prune': True, 'StackFileContent': manifest})
-            
+        
+        if getenv('DRY_RUN'):
+          print('Not updating stack {} because DRY_RUN is set'.format(stack['Name'])
+          return
+        
         do_request(method=method, path=path, headers=headers, body=body)            
         print('Updated stack {}'.format(stack['Name']))
-
 
 def do_request(method='GET', body=None, headers={}, path='/'):
     url = urlparse(getenv('API_URL'))
